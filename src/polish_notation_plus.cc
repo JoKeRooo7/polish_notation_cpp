@@ -1,4 +1,4 @@
-#include "polish_notation.h"
+#include "polish_notation_plus.h"
 
 #include <cmath>
 #include <stdexcept>  //throw
@@ -10,40 +10,77 @@ PolishNotation::PolishNotation(const std::string &other_string) {
   set_in_default_entry(other_string);
 }
 
+PolishNotation::PolishNotation(const std::wstring &other_string) {
+  default_entry_ = other_string;
+  Сonversion();
+}
+
+PolishNotation::PolishNotation(const wchar_t &other_string) {
+  default_entry_ = other_string;
+  Сonversion();
+}
+
 PolishNotation::PolishNotation(const char &other_string) {
   default_entry_ = other_string;
   Сonversion();
 }
 
 void PolishNotation::set_in_default_entry(const std::string &other_string,
-                                          const double value_x) {
+                                          const std::map<char, double>& arg_values) {
+  ConvertInString(other_string);
+  Сonversion();
+  get_result(arg_values);
+}
+
+void PolishNotation::set_in_default_entry(const std::wstring &other_string,
+                                          const std::map<char, double>& arg_values) {
   default_entry_ = other_string;
   Сonversion();
-  get_result(value_x);
+  get_result(arg_values);
+}
+
+void PolishNotation::set_in_default_entry(const std::wstring &other_string) {
+  default_entry_ = other_string;
+  Сonversion();
 }
 
 void PolishNotation::set_in_default_entry(const std::string &other_string) {
-  default_entry_ = other_string;
+  ConvertInString(other_string);
   Сonversion();
-  get_result(0.0);
 }
 
-std::string PolishNotation::get_postfix_entry(const std::string &other_string) {
+std::wstring PolishNotation::get_postfix_entry(const std::string &other_string) {
   set_in_default_entry(other_string);
   return postfix_entry_;
 }
 
-std::string PolishNotation::get_postfix_entry() const noexcept {
+std::wstring PolishNotation::get_postfix_entry(const std::wstring &other_string) {
+  set_in_default_entry(other_string);
   return postfix_entry_;
 }
 
-std::string PolishNotation::get_default_entry() const noexcept {
+std::wstring PolishNotation::get_postfix_entry() const noexcept {
+  return postfix_entry_;
+}
+
+std::wstring PolishNotation::get_default_entry() const noexcept {
   return default_entry_;
 }
 
+double PolishNotation::get_result(const std::wstring &other_string,
+                                 const std::map<char, double>& arg_values) {
+  set_in_default_entry(other_string, arg_values);
+  return res_;
+}
+
 double PolishNotation::get_result(const std::string &other_string,
-                                  const double value_x) {
-  set_in_default_entry(other_string, value_x);
+                                 const std::map<char, double>& arg_values) {
+  set_in_default_entry(other_string, arg_values);
+  return res_;
+}
+
+double PolishNotation::get_result(const std::wstring &other_string) {
+  set_in_default_entry(other_string);
   return res_;
 }
 
@@ -52,23 +89,34 @@ double PolishNotation::get_result(const std::string &other_string) {
   return res_;
 }
 
-double PolishNotation::get_result(const double value_x) {
+double PolishNotation::get_result(const std::map<char, double>& arg_values) {
   if (postfix_entry_[0] == '\0') {
     Сonversion();
   }
-  CalculatingPolishNotation(value_x);
+  CalculatingPolishNotation(arg_values);
   return res_;
 }
 
 double PolishNotation::result() const noexcept { return res_; }
 
 double PolishNotation::get_result() {
-  get_result(0.0);
   return res_;
+}
+
+PolishNotation &PolishNotation::operator=(const std::wstring &other_string) {
+  set_in_default_entry(other_string);
+  return *this;
 }
 
 PolishNotation &PolishNotation::operator=(const std::string &other_string) {
   set_in_default_entry(other_string);
+  return *this;
+}
+
+PolishNotation &PolishNotation::operator=(const wchar_t &other_string) {
+  default_entry_ = other_string;
+  Сonversion();
+  result();
   return *this;
 }
 
@@ -84,13 +132,16 @@ void PolishNotation::Сonversion() {
   RemovingSpaces();
   GarbageCleaning();
   for (size_t i = 0; i < default_entry_.size(); ++i) {
-    if (default_entry_[i] == 'x') {
-      WritingX(i, sign);
-    } else if (IsPi(i, default_entry_)) {
+    if (IsPi(i, default_entry_)) {
       WritingPi(i, sign);
-    } else if (default_entry_[i] == 'E' || default_entry_[i] == 'e') {
+    } else if (IsExponent(i, default_entry_)) {
       WritingAnExponentialRecord(++i);
+    } else if (IsSingleСharacter(i, default_entry_)) {
+      WritingLetter(i, sign);
     } else if (default_entry_[i] == '.') {
+      /* if there is a record in the water without numbers before the dot. 
+       * Example (.12312)
+       */
       postfix_entry_ += '0';
       WritingNumbers(i, sign);
     } else if (IsNum(default_entry_[i])) {
@@ -126,7 +177,7 @@ void PolishNotation::WritingAnExponentialRecord(size_t &i) noexcept {
   }
 }
 
-void PolishNotation::WritingX(size_t &i, bool &sign) noexcept {
+void PolishNotation::WritingLetter(size_t &i, bool &sign) noexcept {
   postfix_entry_ += default_entry_[i];
   CheckWritingMinus(sign);
   postfix_entry_ += ' ';
@@ -134,18 +185,19 @@ void PolishNotation::WritingX(size_t &i, bool &sign) noexcept {
 
 void PolishNotation::CheckWritingMinus(bool &sign) noexcept {
   if (sign == true) {
-    postfix_entry_ += "1- ";
+    postfix_entry_ += L"1- ";
     OperatorPriority('*');
     sign = false;
   }
 }
 
 void PolishNotation::WritingPi(size_t &i, bool &sign) noexcept {
-  postfix_entry_ += 'p';
-  postfix_entry_ += 'i';
+  postfix_entry_ += L'π';
   CheckWritingMinus(sign);
   postfix_entry_ += ' ';
-  ++i;
+  if (default_entry_[i] != L'π') {
+    ++i;
+  }
 }
 
 void PolishNotation::WritingNumbers(size_t &i, bool &sign) noexcept {
@@ -182,7 +234,11 @@ char PolishNotation::CheckPriority(char symbol) noexcept {
 bool PolishNotation::WritingFunctions(size_t &i) {
   bool was_function = false;
   if (IsSqrtFunction(i, default_entry_)) {
-    was_function = PushBackFucntion(i, 4);
+    if (default_entry_[i] != L'√') {
+      was_function = PushBackFucntion(i, 4);
+    } else {
+      was_function = PushBackFucntion(i, 1);
+    }
   } else if (IsModFunction(i, default_entry_) ||
              IsLogFunction(i, default_entry_)) {
     was_function = PushBackFucntion(i, 3);
@@ -197,41 +253,49 @@ bool PolishNotation::WritingFunctions(size_t &i) {
   return was_function;
 }
 
-bool PolishNotation::IsPi(size_t &i, std::string str) noexcept {
-  return (str[i] == 'p' && str[i + 1] == 'i');
+bool PolishNotation::IsPi(size_t &i, std::wstring& str) noexcept {
+  return (str[i] == 'p' && str[i + 1] == 'i') || str[i] == L'π';
 }
 
-bool PolishNotation::IsModFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsSingleСharacter(size_t &i, std::wstring& str) noexcept {
+  return IsLetter(str[i]) && !IsLetter(str[i+1]);
+}
+
+bool PolishNotation::IsExponent(size_t &i, std::wstring& str) noexcept {
+  return i != 0 && IsNum(str[i-1]) && (str[i] == 'E' || str[i] == 'e') && CheckPriority(str[i + 1] == '1') ;
+}
+
+bool PolishNotation::IsModFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 'm' && str[i + 1] == 'o' && str[i + 2] == 'd');
 }
 
-bool PolishNotation::IsLogFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsLogFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 'l' && str[i + 1] == 'o' && str[i + 2] == 'g');
 }
 
-bool PolishNotation::IsNaturalLogFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsNaturalLogFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 'l' && str[i + 1] == 'n');
 }
 
-bool PolishNotation::IsSinFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsSinFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 's' && str[i + 1] == 'i' && str[i + 2] == 'n');
 }
 
-bool PolishNotation::IsCosFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsCosFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 'c' && str[i + 1] == 'o' && str[i + 2] == 's');
 }
 
-bool PolishNotation::IsTanFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsTanFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 't' && str[i + 1] == 'a' && str[i + 2] == 'n');
 }
 
-bool PolishNotation::IsArcFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsArcFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 'a' && str[i + 1] == 'r' && str[i + 2] == 'c');
 }
 
-bool PolishNotation::IsSqrtFunction(size_t &i, std::string str) noexcept {
+bool PolishNotation::IsSqrtFunction(size_t &i, std::wstring& str) noexcept {
   return (str[i] == 's' && str[i + 1] == 'q' && str[i + 2] == 'r' &&
-          str[i + 3] == 't');
+          str[i + 3] == 't') || str[i] == L'√';
 }
 
 bool PolishNotation::ProcessWritingArcFunction(size_t &i, bool &was_function) {
@@ -297,7 +361,7 @@ bool PolishNotation::TakeFunctionsOffTheStack() noexcept {
 }
 
 bool PolishNotation::IsLetter(char symbol) noexcept {
-  return (symbol >= 'a' && symbol <= 'z');
+  return (symbol >= 'a' && symbol <= 'z') || (symbol >= 'A' && symbol <= 'Z');
 }
 
 bool PolishNotation::IsNum(char symbol) noexcept {
@@ -321,7 +385,7 @@ bool PolishNotation::WritingOperators(size_t &i, bool &sign) noexcept {
   } else if ((IsMoreOneS(i) && CheckNextElement(i)) || ConditionOne(i)) {
     if (default_entry_[i] == '-') {
       char_stack_.push('*');
-      postfix_entry_ += "1- ";
+      postfix_entry_ += L"1- ";
     }
   } else if (ConditionTwo(i)) {
     sign = (default_entry_[i] == '-') ? true : false;
@@ -379,19 +443,30 @@ void PolishNotation::GarbageCleaning() noexcept {
   while (!num_stack_.empty()) num_stack_.pop();
 }
 
-void PolishNotation::CalculatingPolishNotation(const double value_x) {
+void PolishNotation::CalculatingPolishNotation(const std::map<char, double>& arg_values) {
   for (size_t i = 0; i < postfix_entry_.size(); ++i) {
     if (postfix_entry_[i] == ' ') {
       continue;
-    } else if (postfix_entry_[i] == 'x') {
-      num_stack_.push(value_x);
     } else if (IsPi(i, postfix_entry_)) {
       num_stack_.push(kPi);
-      i++;
     } else if (IsNum(postfix_entry_[i])) {
       ReadingNumbers(i);
+    } else if (ReadingOperators(i)) {
+      continue;
+    } else if (ReadingFunctions(i)) {
+      continue;
+    } else if (postfix_entry_[i] == 'e') {
+      num_stack_.push(kEuler);
+    } else if (IsLetter(postfix_entry_[i])) {
+      auto need_value = arg_values.find(postfix_entry_[i]);
+      if (need_value == arg_values.end()) {
+        throw std::invalid_argument(std::string("no value found for") +
+              postfix_entry_[i]);
+      }
+      num_stack_.push(need_value);
     } else {
-      ReadingFunctionsAndOperator(i);
+      throw std::invalid_argument(std::string("Unknown symvol - ") +
+              postfix_entry_[i]);
     }
   }
   if (postfix_entry_.size() != 0) {
@@ -420,15 +495,6 @@ void PolishNotation::ConversionToNumbers(size_t &i, bool integers) noexcept {
       num_stack_.top() += postfix_entry_[i++] - 48;
     } else {
       num_stack_.top() += (postfix_entry_[i++] - 48) * std::pow(10, -j);
-    }
-  }
-}
-
-void PolishNotation::ReadingFunctionsAndOperator(size_t &i) {
-  if (!ReadingOperators(i)) {
-    if (!ReadingFunctions(i)) {
-      throw std::invalid_argument(std::string("Unknown symvol - ") +
-                                  postfix_entry_[i]);
     }
   }
 }
@@ -506,7 +572,11 @@ bool PolishNotation::ProcessReadingFunctions(size_t &i) {
     i += 3;
   } else if (IsSqrtFunction(i, postfix_entry_)) {
     num_stack_.push(std::sqrt(number));
-    i += 4;
+    if (postfix_entry_[i] == L'√') {
+      i += 1;
+    } else {
+      i += 4;
+    }
   } else if (IsArcFunction(i, postfix_entry_)) {
     i += 3;
     ProcessReadingArcFunctions(i, number);
@@ -528,6 +598,14 @@ void PolishNotation::ProcessReadingArcFunctions(size_t &i,
   } else if (IsTanFunction(i, postfix_entry_)) {
     i += 3;
     num_stack_.push(std::atan(number));
+  }
+}
+
+void PolishNotation::ConvertInString(const std::string& other_string) {
+  default_entry_.reserve(other_string.size());
+
+  for (char c : other_string) {
+    default_entry_.push_back(static_cast<wchar_t>(c));
   }
 }
 
