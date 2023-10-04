@@ -11,18 +11,21 @@ PolishNotation::PolishNotation(const std::string &other_string) {
 }
 
 PolishNotation::PolishNotation(const std::wstring &other_string) {
-  default_entry_ = other_string;
-  Сonversion();
+  set_in_default_entry(other_string);
 }
 
 PolishNotation::PolishNotation(const wchar_t &other_string) {
   default_entry_ = other_string;
   Сonversion();
+  get_result();
 }
 
 PolishNotation::PolishNotation(const char &other_string) {
-  default_entry_ = other_string;
+  std::string new_str;
+  new_str = other_string;
+  ConvertInString(new_str);
   Сonversion();
+  get_result();
 }
 
 void PolishNotation::set_in_default_entry(const std::string &other_string,
@@ -42,11 +45,13 @@ void PolishNotation::set_in_default_entry(const std::wstring &other_string,
 void PolishNotation::set_in_default_entry(const std::wstring &other_string) {
   default_entry_ = other_string;
   Сonversion();
+  get_result();
 }
 
 void PolishNotation::set_in_default_entry(const std::string &other_string) {
   ConvertInString(other_string);
   Сonversion();
+  get_result();
 }
 
 std::wstring PolishNotation::get_postfix_entry(const std::string &other_string) {
@@ -97,11 +102,15 @@ double PolishNotation::get_result(const std::map<char, double>& arg_values) {
   return res_;
 }
 
-double PolishNotation::result() const noexcept { return res_; }
-
 double PolishNotation::get_result() {
+  std::map<char, double> nullmap;
+  CalculatingPolishNotation(nullmap);
   return res_;
 }
+
+double PolishNotation::result() const noexcept { return res_; }
+
+
 
 PolishNotation &PolishNotation::operator=(const std::wstring &other_string) {
   set_in_default_entry(other_string);
@@ -154,6 +163,8 @@ void PolishNotation::Сonversion() {
       ClosingBracket();
     } else if (WritingOperators(i, sign)) {
       continue;
+    } else {
+      throw std::invalid_argument("Not found symbol");
     }
   }
 
@@ -212,7 +223,7 @@ void PolishNotation::WritingNumbers(size_t &i, bool &sign) noexcept {
   postfix_entry_ += ' ';
 }
 
-char PolishNotation::CheckPriority(char symbol) noexcept {
+char PolishNotation::CheckPriority(wchar_t symbol) noexcept {
   char priority = '0';
   if (symbol == '+') {
     priority = '1';
@@ -225,6 +236,8 @@ char PolishNotation::CheckPriority(char symbol) noexcept {
   } else if (symbol == '^') {
     priority = '3';
   } else if (IsLetter(symbol)) {
+    priority = '4';
+  } else if (symbol == L'√') {
     priority = '4';
   }
 
@@ -461,12 +474,12 @@ void PolishNotation::CalculatingPolishNotation(const std::map<char, double>& arg
       auto need_value = arg_values.find(postfix_entry_[i]);
       if (need_value == arg_values.end()) {
         throw std::invalid_argument(std::string("no value found for") +
-              postfix_entry_[i]);
+              (char)postfix_entry_[i]);
       }
-      num_stack_.push(need_value);
+      num_stack_.push(need_value -> second);
     } else {
       throw std::invalid_argument(std::string("Unknown symvol - ") +
-              postfix_entry_[i]);
+              (char)postfix_entry_[i]);
     }
   }
   if (postfix_entry_.size() != 0) {
@@ -542,7 +555,7 @@ double PolishNotation::TakingFromTheStack() {
 }
 
 bool PolishNotation::ReadingFunctions(size_t &i) {
-  if (IsLetter(postfix_entry_[i])) {
+  if (IsLetter(postfix_entry_[i]) || postfix_entry_[i] == L'√') {
     return ProcessReadingFunctions(i);
   }
 

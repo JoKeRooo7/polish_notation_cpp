@@ -61,7 +61,7 @@ class PolishNotation {
   void CheckWritingMinus(bool &sign) noexcept;
   void WritingNumbers(size_t &i, bool &sign) noexcept;
   void WritingPi(size_t &i, bool &sign) noexcept;
-  char CheckPriority(char symbol) noexcept;
+  char CheckPriority(wchar_t symbol) noexcept;
   bool WritingFunctions(size_t &i);
   bool IsPi(size_t &i, std::wstring& str) noexcept;
   bool IsSingleСharacter(size_t &i, std::wstring& str) noexcept;
