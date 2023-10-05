@@ -54,23 +54,47 @@ void PolishNotation::set_in_default_entry(const std::string &other_string) {
   get_result();
 }
 
-std::wstring PolishNotation::get_postfix_entry(const std::string &other_string) {
+std::wstring PolishNotation::w_get_postfix_entry(const std::string &other_string) {
   set_in_default_entry(other_string);
   return postfix_entry_;
 }
 
-std::wstring PolishNotation::get_postfix_entry(const std::wstring &other_string) {
+std::wstring PolishNotation::w_get_postfix_entry(const std::wstring &other_string) {
   set_in_default_entry(other_string);
   return postfix_entry_;
 }
 
-std::wstring PolishNotation::get_postfix_entry() const noexcept {
+std::wstring PolishNotation::w_get_postfix_entry() const noexcept {
   return postfix_entry_;
 }
 
-std::wstring PolishNotation::get_default_entry() const noexcept {
+std::wstring PolishNotation::w_get_default_entry() const noexcept {
   return default_entry_;
 }
+
+
+std::string PolishNotation::get_postfix_entry(const std::string &other_string) {
+  set_in_default_entry(other_string);
+  std::string res(postfix_entry_.begin(), postfix_entry_.end());
+  return res;
+}
+
+std::string PolishNotation::get_postfix_entry(const std::wstring &other_string) {
+  set_in_default_entry(other_string);
+  std::string res(postfix_entry_.begin(), postfix_entry_.end());
+  return res;
+}
+
+std::string PolishNotation::get_postfix_entry() const noexcept {
+  std::string res(postfix_entry_.begin(), postfix_entry_.end());
+  return res;
+}
+
+std::string PolishNotation::get_default_entry() const noexcept {
+  std::string res(default_entry_.begin(), default_entry_.end());
+  return res;
+}
+
 
 double PolishNotation::get_result(const std::wstring &other_string,
                                  const std::map<char, double>& arg_values) {

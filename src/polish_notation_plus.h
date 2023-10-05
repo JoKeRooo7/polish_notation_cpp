@@ -28,10 +28,14 @@ class PolishNotation {
                             const std::map<char, double>& arg_values);
   void set_in_default_entry(const std::wstring &other_string);
   void set_in_default_entry(const std::string &other_string);
-  std::wstring get_postfix_entry(const std::string &other_string);
-  std::wstring get_postfix_entry(const std::wstring &other_string);
-  std::wstring get_postfix_entry() const noexcept;
-  std::wstring get_default_entry() const noexcept;
+  std::wstring w_get_postfix_entry(const std::string &other_string);
+  std::wstring w_get_postfix_entry(const std::wstring &other_string);
+  std::wstring w_get_postfix_entry() const noexcept;
+  std::wstring w_get_default_entry() const noexcept;
+  std::string get_postfix_entry(const std::string &other_string);
+  std::string get_postfix_entry(const std::wstring &other_string);
+  std::string get_postfix_entry() const noexcept;
+  std::string get_default_entry() const noexcept;
   double get_result(const std::wstring &other_string, const std::map<char, double>& arg_values);
   double get_result(const std::string &other_string, const std::map<char, double>& arg_values);
   double get_result(const std::wstring &other_string);
